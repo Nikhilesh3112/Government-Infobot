@@ -124,7 +124,7 @@ def get_response(user_input):
         docs = _retrieve(st.session_state.vector_store, user_input)
         context = _format_docs(docs)
     except Exception as e:
-        pass
+        return f"⚠️ **Retrieval Error:** Failed to load documents. ({str(e)})\n\n"
 
     messages = [
         AIMessage(
