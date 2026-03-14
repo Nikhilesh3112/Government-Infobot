@@ -150,7 +150,7 @@ def get_response(user_input):
     except Exception as e:
         
         return (
-            "⚠️ **API Error:** I'm temporarily unable to generate a full answer. "
+            f"⚠️ **API Error:** I'm temporarily unable to generate a full answer. ({str(e)})\n\n"
             "Here's the raw information I found:\n\n" + context[:1200]
         )
 
