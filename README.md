@@ -1,24 +1,31 @@
 # Government Infobot
 
-A Streamlit app that answers questions about Indian government schemes using a Retrieval-Augmented Generation (RAG) pipeline. It queries a prebuilt FAISS knowledge base created from:
+A powerful, multilingual Streamlit web application that answers questions about Indian Government Schemes. The app leverages cutting-edge **Natural Language Processing (NLP)**, **LangChain**, and **Retrieval-Augmented Generation (RAG)** to provide accurate, concise, and context-aware responses.
 
-- PDF(s) in `pdf/`
-- A curated web page (Wikipedia list of Indian government schemes)
+## How It Works
+The app acts as a smart, conversational "Government Infobot." It ingests data from two primary sources:
+1. **Local Documents:** PDFs stored in the `pdf/` directory (e.g., scheme documents).
+2. **Web Scraping:** A curated Wikipedia page listing all Indian government schemes.
 
-The app uses **Google Gemini** for both embeddings (`gemini-embedding-001`) and chat responses (`gemini-2.5-flash`), with built-in rate-limit handling and intelligent fallbacks to general knowledge if the documents lack the needed information.
+Using **Google Gemini's Embedding Models**, the app converts these documents into mathematical vectors and stores them in a highly efficient **FAISS** vector database. When a user asks a question, the app's NLP engine performs a semantic search to retrieve the most relevant paragraphs from the database. It then feeds this context to the **Google Gemini 2.5 Flash** Large Language Model (LLM) to generate a helpful, human-like response in the user's native language. If the answer isn't in the context, it smartly falls back to its general knowledge.
 
-## Features
-- Complete migration to **Google Gemini API** (No OpenAI dependencies)
-- Login/Register using `streamlit-authenticator` (fixed seamless one-click login routing)
-- Retrieves from merged FAISS stores: `faiss_pdf_1` and `faiss_url_1`
-- Chat UI with brief, multilingual, context-aware answers
-- Free-tier friendly with targeted rate-limit error messaging (HTTP 429 warnings)
+## Key Features
+- **Advanced NLP & RAG:** Built with LangChain to seamlessly connect the LLM with the FAISS vector databases.
+- **Multilingual Support:** Automatically detects the user's language and replies in the same language.
+- **Secure Authentication:** Built-in seamless login, registration, and secure cookie management using `streamlit-authenticator`. 
+- **Privacy First:** Chat histories are strictly isolated per user and wiped upon logout.
+- **API Rate Limiting:** Gracefully handles API exhaustion with clear UI warnings (HTTP 429 support).
 
-## Requirements
-- Python 3.10+
+## Tech Stack
+- **Frontend & UI:** Streamlit
+- **LLM & Embeddings:** Google Gemini (`gemini-2.5-flash` and `gemini-embedding-001`)
+- **Orchestration:** LangChain
+- **Vector Database:** FAISS
+- **Authentication:** Streamlit-Authenticator
 
-## Setup
-1) Create and activate a virtual environment
+## Local Setup Instructions
+
+1) **Create and activate a virtual environment:**
 ```bash
 python -m venv venv
 .\venv\Scripts\activate  # Windows
@@ -26,31 +33,21 @@ source venv/bin/activate # Mac/Linux
 pip install -r requirements.txt
 ```
 
-2) Configure Google Gemini credentials
-- Option A: Environment variables
-  ```bash
-  export GOOGLE_API_KEY="AIzaSy..."
-  export GOOGLE_CHAT_MODEL="gemini-2.5-flash"
-  export GOOGLE_EMBED_MODEL="models/gemini-embedding-001"
-  ```
-- Option B: Streamlit secrets (local only)
-  Create `.streamlit/secrets.toml`:
-  ```toml
-  [google]
-  api_key = "AIzaSy..."
-  chat_model = "gemini-2.5-flash"
-  embed_model = "models/gemini-embedding-001"
-  ```
-  *(Ensure `.streamlit/secrets.toml` is ignored in git)*
+2) **Configure Google Gemini API Credentials:**
+Provide your API key to Streamlit secrets by creating a `.streamlit/secrets.toml` file:
+```toml
+[google]
+api_key = "AIzaSy..."
+chat_model = "gemini-2.5-flash"
+embed_model = "models/gemini-embedding-001"
+```
+*(Note: `.streamlit/secrets.toml` is ignored by git to protect your keys).*
 
-3) Run the app
+3) **Run the Application:**
 ```bash
 streamlit run main.py
 ```
 
-## Data/Indexes
-- `faiss_pdf_1/` and `faiss_url_1/` contain the prebuilt FAISS indexes used at runtime.
-- To rebuild indexes (if adding new PDFs/URLs), run `python loader.py`. Note that rebuilding requires hitting the embedding API.
-
-## Notes
-- **Security:** Do not commit API keys or secrets. Keep `.streamlit/secrets.toml` untracked. User credentials registered in the app are automatically hashed and saved to `config.yaml`.
+## Data Management & Rebuilding Indexes
+- The `faiss_pdf_1/` and `faiss_url_1/` folders contain the prebuilt FAISS indexes.
+- If you add new PDFs to the `pdf/` folder or wish to scrape new URLs, you can run the provided `loader.py` script to rebuild the vector databases.
