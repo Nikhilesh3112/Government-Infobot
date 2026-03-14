@@ -2,6 +2,7 @@ faiss-cpu
 streamlit-authenticator
 streamlit
 langchain
-langchain-openai
+langchain-google-genai
+langchain-community
 pyPDF
 beautifulsoup4

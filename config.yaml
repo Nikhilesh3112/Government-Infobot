@@ -21,11 +21,14 @@ credentials:
       logged_in: false
       name: Rebecca Briggs
       password: $2b$12$Nabi7ZRB//frkK6HHLu4ouSUABkx4hbsLT/RtttnnUx5bE3btepoK
+    test:
+      email: test@gmail.com
+      first_name: test
+      last_name: ing
+      logged_in: false
+      password: $2b$12$ZmK/e.Defkku00lcCMpoxe3WxJyDmJFDYvXDLusIelwTdmWnsjFW.
+      password_hint: '1234'
+      roles: null
 preauthorized:
   emails:
   - melsby@gmail.com
-
-openai:
-  api_key: REDACTED_OPENAI_KEY
-  chat_model: gpt-4o-mini
-  embed_model: text-embedding-3-small

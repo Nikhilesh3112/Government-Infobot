@@ -5,57 +5,52 @@ A Streamlit app that answers questions about Indian government schemes using a R
 - PDF(s) in `pdf/`
 - A curated web page (Wikipedia list of Indian government schemes)
 
-The app uses OpenAI for embeddings and chat responses, with a fallback that returns snippet-only answers if the model is unavailable.
+The app uses **Google Gemini** for both embeddings (`gemini-embedding-001`) and chat responses (`gemini-2.5-flash`), with built-in rate-limit handling and intelligent fallbacks to general knowledge if the documents lack the needed information.
 
 ## Features
-- Login/Register using `streamlit-authenticator`
+- Complete migration to **Google Gemini API** (No OpenAI dependencies)
+- Login/Register using `streamlit-authenticator` (fixed seamless one-click login routing)
 - Retrieves from merged FAISS stores: `faiss_pdf_1` and `faiss_url_1`
-- Chat UI with short, context-aware answers
-- Free-tier friendly: low `k`, trimmed context, small responses
-- Fallback to snippet extract when API quota/errors occur
+- Chat UI with brief, multilingual, context-aware answers
+- Free-tier friendly with targeted rate-limit error messaging (HTTP 429 warnings)
 
 ## Requirements
-- Python 3.11
+- Python 3.10+
 
 ## Setup
 1) Create and activate a virtual environment
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate # Mac/Linux
 pip install -r requirements.txt
 ```
 
-2) Configure OpenAI credentials (pick one)
+2) Configure Google Gemini credentials
 - Option A: Environment variables
   ```bash
-  export OPENAI_API_KEY="sk-REPLACE_ME"
-  export OPENAI_CHAT_MODEL="gpt-4o-mini"
-  export OPENAI_EMBED_MODEL="text-embedding-3-small"
+  export GOOGLE_API_KEY="AIzaSy..."
+  export GOOGLE_CHAT_MODEL="gemini-2.5-flash"
+  export GOOGLE_EMBED_MODEL="models/gemini-embedding-001"
   ```
-- Option B: Streamlit secrets (local only; keep untracked by git)
-  Create `.streamlit/secrets.toml` with:
+- Option B: Streamlit secrets (local only)
+  Create `.streamlit/secrets.toml`:
   ```toml
-  [openai]
-  api_key = "sk-REPLACE_ME"
-  chat_model = "gpt-4o-mini"
-  embed_model = "text-embedding-3-small"
+  [google]
+  api_key = "AIzaSy..."
+  chat_model = "gemini-2.5-flash"
+  embed_model = "models/gemini-embedding-001"
   ```
-  Ensure `.streamlit/secrets.toml` is listed in `.gitignore`.
+  *(Ensure `.streamlit/secrets.toml` is ignored in git)*
 
-3) (Optional) Update authentication users in `config.yaml` under `credentials` and `preauthorized`.
-
-4) Run the app
+3) Run the app
 ```bash
 streamlit run main.py
 ```
 
-## Usage
-- Login or register via the UI
-- Ask a question about government schemes; the app retrieves from the FAISS stores and responds
-
 ## Data/Indexes
-- `faiss_pdf_1/` and `faiss_url_1/` contain the prebuilt FAISS indexes used at runtime
-- To (re)build indexes, see `loader.py` for simple scripts to create FAISS from a URL or PDF directory
+- `faiss_pdf_1/` and `faiss_url_1/` contain the prebuilt FAISS indexes used at runtime.
+- To rebuild indexes (if adding new PDFs/URLs), run `python loader.py`. Note that rebuilding requires hitting the embedding API.
 
 ## Notes
-- Do not commit API keys or secrets. Keep `.streamlit/secrets.toml` untracked and rotate any exposed keys.
+- **Security:** Do not commit API keys or secrets. Keep `.streamlit/secrets.toml` untracked. User credentials registered in the app are automatically hashed and saved to `config.yaml`.
