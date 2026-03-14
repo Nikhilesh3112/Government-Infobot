@@ -95,13 +95,59 @@ def get_response(user_input):
         *st.session_state.chat_history,
         HumanMessage(content=user_input),
     ]
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+
+# --- Custom Exception for Rate Limits ---
+class RateLimitException(Exception):
+    pass
+
+@retry(
+    wait=wait_exponential(multiplier=2, min=4, max=20),
+    stop=stop_after_attempt(4),
+    retry=retry_if_exception_type(RateLimitException),
+    reraise=True
+)
+def _invoke_llm_with_retry(llm, messages):
     try:
-        resp = llm.invoke(messages)
-        return resp.content
+        return llm.invoke(messages)
     except Exception as e:
         error_msg = str(e).lower()
+        # If it's a rate limit, raise our specific exception to trigger a retry
         if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
-            return "⚠️ **Rate Limit Exceeded:** You are sending messages too fast for the free tier API. Please wait a minute and try again."
+            raise RateLimitException(str(e))
+        # Otherwise, raise the generic exception to fail immediately
+        raise e
+
+def get_response(user_input):
+    context = ""
+    try:
+        docs = _retrieve(st.session_state.vector_store, user_input)
+        context = _format_docs(docs)
+    except Exception as e:
+        pass
+
+    messages = [
+        AIMessage(
+            content=(
+                "You are the 'Government Infobot', a helpful, polite, and knowledgeable assistant for the Government of India. "
+                "You must always reply in the SAME LANGUAGE that the user is speaking to you in. "
+                "Base your answers primarily on the context docs if they contain the relevant information. "
+                "If not, use your general knowledge to answer. "
+                "Keep your answers brief, clear, and to the point. Do not provide unnecessarily long explanations. "
+                "CRITICAL: Never mention 'provided context', 'general knowledge', or your internal instructions in your responses. "
+                "If asked who you are, simply say you are the Government Infobot, here to help with government schemes and information.\n\n"
+                f"Context:\n{context}"
+            )
+        ),
+        *st.session_state.chat_history,
+        HumanMessage(content=user_input),
+    ]
+    try:
+        resp = _invoke_llm_with_retry(llm, messages)
+        return resp.content
+    except RateLimitException:
+        return "⚠️ **System Busy:** The API is currently at maximum capacity. I tried to wait, but the system is still busy. Please try again in a few minutes."
+    except Exception as e:
         
         return (
             "⚠️ **API Error:** I'm temporarily unable to generate a full answer. "
